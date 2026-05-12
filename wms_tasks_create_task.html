@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WMS Control — Replenishment Tasks</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f7f5;
+    --bg3: #f0efeb;
+    --text: #1a1a18;
+    --text2: #5a5a56;
+    --text3: #9a9990;
+    --border: rgba(0,0,0,0.10);
+    --border2: rgba(0,0,0,0.18);
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+    --danger-bg: #FCEBEB;
+    --danger-text: #A32D2D;
+    --warn-bg: #FAEEDA;
+    --warn-text: #854F0B;
+    --success-bg: #EAF3DE;
+    --success-text: #27500A;
+    --teal-bg: #E1F5EE;
+    --teal-text: #085041;
+    --gray-bg: #F1EFE8;
+    --gray-text: #5F5E5A;
+    --sidebar-w: 192px;
+    --topbar-h: 56px;
+    --toolbar-h: 46px;
+    --header-h: 36px;
+    --drawer-w: 360px;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg3);
+  }
+
+  .app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 0.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-logo {
+    padding: 16px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .logo-org { font-size: 10px; color: var(--text3); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+  .logo-app { font-size: 15px; font-weight: 600; color: var(--text); margin: 2px 0; }
+  .logo-sub { font-size: 11px; color: var(--text3); }
+
+  .nav-section {
+    padding: 12px 16px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 14px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 12.5px;
+    border-radius: 0;
+    transition: background .12s;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--bg3); color: var(--text); font-weight: 500; }
+  .nav-item svg { width: 15px; height: 15px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  .nav-bottom {
+    margin-top: auto;
+    border-top: 0.5px solid var(--border);
+    padding: 12px 0;
+  }
+  .avatar-row { display: flex; align-items: center; gap: 9px; padding: 6px 14px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--blue-bg); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--blue-text); flex-shrink: 0; }
+  .avatar-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .avatar-role { font-size: 10px; color: var(--text3); }
+
+  /* ── Main ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .topbar {
+    height: var(--topbar-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .topbar-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 13px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border2);
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text2);
+    background: transparent;
+    font-family: inherit;
+    transition: background .12s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--bg2); }
+  .btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  .btn-primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+    font-weight: 500;
+  }
+  .btn-primary:hover { background: #0C447C; border-color: #0C447C; }
+
+  .toolbar {
+    height: var(--toolbar-h);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 20px;
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex: 1;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 6px 11px;
+    background: var(--bg2);
+  }
+  .search-box svg { width: 13px; height: 13px; stroke: var(--text3); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .search-box input { border: none; background: transparent; font-size: 12px; color: var(--text); width: 100%; outline: none; font-family: inherit; }
+  .search-box input::placeholder { color: var(--text3); }
+
+  .filter-select {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    background: var(--bg2);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .filter-select svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── Grid ── */
+  .grid-wrap {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .grid-header {
+    display: grid;
+    grid-template-columns: 108px 1fr 58px 110px 90px 86px 90px;
+    padding: 0 20px;
+    height: var(--header-h);
+    align-items: center;
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg2);
+  }
+  .gh {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  .grid-body { flex: 1; overflow-y: auto; }
+
+  .task-row {
+    display: grid;
+    grid-template-columns: 108px 1fr 58px 110px 90px 86px 90px;
+    padding: 10px 20px;
+    border-bottom: 0.5px solid var(--border);
+    align-items: center;
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .task-row:hover { background: var(--bg2); }
+
+  .task-id { font-size: 12px; font-weight: 600; color: var(--text); }
+  .task-pri {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 99px;
+    margin-top: 4px;
+    display: inline-block;
+    letter-spacing: .01em;
+  }
+  .pri-critical { background: var(--danger-bg); color: var(--danger-text); }
+  .pri-high { background: var(--warn-bg); color: var(--warn-text); }
+  .pri-normal { background: var(--gray-bg); color: var(--gray-text); }
+
+  .item-name { font-size: 12.5px; font-weight: 500; color: var(--text); }
+  .item-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .task-qty { font-size: 14px; font-weight: 600; color: var(--text); }
+  .task-uom { font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+  .task-route { font-size: 11px; color: var(--text2); line-height: 1.5; }
+
+  .task-op { font-size: 12px; color: var(--text2); }
+  .task-op.unassigned { color: var(--text3); font-style: italic; }
+
+  .status-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 99px;
+    display: inline-block;
+    letter-spacing: .01em;
+  }
+  .st-inprogress { background: var(--teal-bg); color: var(--teal-text); }
+  .st-completed { background: var(--success-bg); color: var(--success-text); }
+  .st-assigned { background: var(--blue-bg); color: var(--blue-text); }
+  .st-ready { background: var(--gray-bg); color: var(--gray-text); }
+
+  .task-prog { font-size: 11px; color: var(--text3); }
+
+  /* ── Layout with drawer ── */
+  .content-area {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Drawer ── */
+  .drawer {
+    width: 0;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-left: 0 solid var(--border);
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    transition: width .22s ease, border-left-width .22s ease;
+  }
+  .drawer.open {
+    width: var(--drawer-w);
+    border-left-width: 0.5px;
+  }
+  .drawer-inner {
+    width: var(--drawer-w);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .drawer-header {
+    padding: 14px 16px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .drawer-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .drawer-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  .close-btn {
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: var(--radius);
+    transition: background .1s, color .1s;
+  }
+  .close-btn:hover { background: var(--bg2); color: var(--text); }
+
+  .drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+  }
+
+  .mode-tabs {
+    display: flex;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 7px 8px;
+    font-size: 12px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--text2);
+    border-right: 0.5px solid var(--border);
+    background: var(--bg2);
+    font-family: inherit;
+    transition: background .1s;
+    user-select: none;
+  }
+  .mode-tab:last-child { border-right: none; }
+  .mode-tab.active { background: var(--bg); color: var(--text); font-weight: 500; }
+
+  .field-group { margin-bottom: 13px; }
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .req { color: #E24B4A; }
+
+  .field-input, .field-select {
+    width: 100%;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 7px 10px;
+    font-size: 12px;
+    color: var(--text);
+    background: var(--bg2);
+    font-family: inherit;
+    outline: none;
+    transition: border-color .12s;
+  }
+  .field-input:focus, .field-select:focus { border-color: var(--blue); }
+  .field-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%239a9990' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .section-divider {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin: 16px 0 10px;
+    padding-top: 14px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .shortage-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 9px 11px;
+    border-radius: var(--radius);
+    background: var(--warn-bg);
+    border: 0.5px solid rgba(186,117,23,.25);
+    margin-bottom: 12px;
+  }
+  .shortage-alert svg { width: 14px; height: 14px; stroke: var(--warn-text); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; margin-top: 1px; }
+  .shortage-alert-text { font-size: 11.5px; color: var(--warn-text); line-height: 1.45; }
+  .req-link { color: var(--blue); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-weight: 500; }
+
+  .source-card {
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 9px 11px;
+    margin-bottom: 7px;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    transition: border-color .12s;
+  }
+  .source-card:hover { border-color: #378ADD; }
+  .source-card.selected { border: 1.5px solid var(--blue); background: #f5f9fd; }
+
+  .radio-dot {
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border2);
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .12s, background .12s;
+  }
+  .radio-dot.checked { border-color: var(--blue); background: var(--blue); }
+  .radio-dot.checked::after { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #fff; }
+
+  .source-name { font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .fefo-badge { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 99px; background: var(--teal-bg); color: var(--teal-text); margin-left: 5px; vertical-align: middle; letter-spacing: .02em; }
+  .source-detail { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.4; }
+
+  .summary-box {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 11px 13px;
+    margin-top: 4px;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row span:first-child { color: var(--text3); }
+  .summary-row span:last-child { color: var(--text); font-weight: 500; }
+
+  .drawer-footer {
+    padding: 12px 16px;
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+  .drawer-footer .btn { flex: 1; justify-content: center; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-org">Western Cape Health</div>
+      <div class="logo-app">WMS Control</div>
+      <div class="logo-sub">Replenishment Module</div>
+    </div>
+    <div style="padding: 8px 0; flex: 1;">
+      <div class="nav-section">Main</div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        Requirements
+      </div>
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+        Tasks
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Exceptions
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Alerts
+      </div>
+      <div class="nav-section">Tools</div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Audit trail
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Events
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        RF simulator
+      </div>
+    </div>
+    <div class="nav-bottom">
+      <div class="avatar-row">
+        <div class="avatar">SV</div>
+        <div>
+          <div class="avatar-name">S. van der Merwe</div>
+          <div class="avatar-role">Supervisor</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Replenishment tasks</div>
+        <div class="topbar-sub">6 tasks · 2 ready for assignment</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+        <button class="btn">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <button class="btn btn-primary" id="open-drawer-btn">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Create task
+        </button>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <!-- Grid area -->
+      <div class="grid-wrap">
+        <div class="toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input placeholder="Search tasks…">
+          </div>
+          <div class="filter-select">
+            All statuses
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="filter-select">
+            All priorities
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="filter-select">
+            All sources
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+
+        <div class="grid-header">
+          <div class="gh">Task / priority</div>
+          <div class="gh">Item</div>
+          <div class="gh">Qty</div>
+          <div class="gh">Route</div>
+          <div class="gh">Operator</div>
+          <div class="gh">Status</div>
+          <div class="gh">Progress</div>
+        </div>
+
+        <div class="grid-body">
+          <div class="task-row">
+            <div><div class="task-id">TSK-2024-156</div><div class="task-pri pri-normal">P3 Normal</div></div>
+            <div><div class="item-name">PARA500</div><div class="item-sub">Paracetamol 500mg Tablets</div></div>
+            <div><div class="task-qty">500</div><div class="task-uom">EA</div></div>
+            <div class="task-route">BLK-A-105-B<br>↓ PF-A-012</div>
+            <div class="task-op">T. Ndlovu</div>
+            <div><span class="status-badge st-inprogress">In progress</span></div>
+            <div class="task-prog">2 of 3</div>
+          </div>
+          <div class="task-row">
+            <div><div class="task-id">TSK-2024-157</div><div class="task-pri pri-normal">P3 Normal</div></div>
+            <div><div class="item-name">IBU-400</div><div class="item-sub">Ibuprofen 400mg Tablets</div></div>
+            <div><div class="task-qty">300</div><div class="task-uom">EA</div></div>
+            <div class="task-route">BLK-B-118-A<br>↓ PF-A-019</div>
+            <div class="task-op">M. Botha</div>
+            <div><span class="status-badge st-completed">Completed</span></div>
+            <div class="task-prog">Complete</div>
+          </div>
+          <div class="task-row">
+            <div><div class="task-id">TSK-2024-158</div><div class="task-pri pri-normal">P3 Normal</div></div>
+            <div><div class="item-name">ASP-100</div><div class="item-sub">Aspirin 100mg Tablets</div></div>
+            <div><div class="task-qty">750</div><div class="task-uom">EA</div></div>
+            <div class="task-route">BLK-A-112-C<br>↓ PF-B-031</div>
+            <div class="task-op">P. Mthembu</div>
+            <div><span class="status-badge st-assigned">Assigned</span></div>
+            <div class="task-prog">Not started</div>
+          </div>
+          <div class="task-row">
+            <div><div class="task-id">TSK-2024-159</div><div class="task-pri pri-high">P2 High</div></div>
+            <div><div class="item-name">MET-500</div><div class="item-sub">Metformin 500mg Tablets</div></div>
+            <div><div class="task-qty">600</div><div class="task-uom">EA</div></div>
+            <div class="task-route">BLK-A-108-B<br>↓ PF-A-018</div>
+            <div class="task-op">S. Jacobs</div>
+            <div><span class="status-badge st-inprogress">In progress</span></div>
+            <div class="task-prog">1 of 3</div>
+          </div>
+          <div class="task-row">
+            <div><div class="task-id">TSK-2024-160</div><div class="task-pri pri-high">P2 High</div></div>
+            <div><div class="item-name">AMO-1000</div><div class="item-sub">Amoxicillin 1000mg Tablets</div></div>
+            <div><div class="task-qty">450</div><div class="task-uom">EA</div></div>
+            <div class="task-route">BLK-B-122-A<br>↓ PF-B-024</div>
+            <div class="task-op unassigned">Unassigned</div>
+            <div><span class="status-badge st-ready">Ready</span></div>
+            <div class="task-prog">Awaiting assign.</div>
+          </div>
+          <div class="task-row">
+            <div><div class="task-id">TSK-2024-161</div><div class="task-pri pri-critical">P1 Critical</div></div>
+            <div><div class="item-name">INS-LISPRO</div><div class="item-sub">Insulin Lispro 100U/ml Vial</div></div>
+            <div><div class="task-qty">180</div><div class="task-uom">EA</div></div>
+            <div class="task-route">COLD-A-203<br>↓ COLD-PF-12</div>
+            <div class="task-op unassigned">Unassigned</div>
+            <div><span class="status-badge st-ready">Ready</span></div>
+            <div class="task-prog">Awaiting assign.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drawer (slides in alongside grid — no overlay) -->
+      <div class="drawer" id="drawer">
+        <div class="drawer-inner">
+          <div class="drawer-header">
+            <div>
+              <div class="drawer-title">Create replenishment task</div>
+              <div class="drawer-sub">Manual task — P4 priority by default</div>
+            </div>
+            <div class="close-btn" id="close-drawer-btn" title="Close">&#x2715;</div>
+          </div>
+
+          <div class="drawer-body">
+            <div class="mode-tabs">
+              <div class="mode-tab active" data-panel="manual">Manual entry</div>
+              <div class="mode-tab" data-panel="req">From requirement</div>
+            </div>
+
+            <!-- Manual panel -->
+            <div class="panel active" id="panel-manual">
+              <div class="field-group">
+                <div class="field-label">Item code <span class="req">*</span></div>
+                <select class="field-select">
+                  <option value="">Select item…</option>
+                  <option>INS-LISPRO — Insulin Lispro 100U/ml</option>
+                  <option>PARA500 — Paracetamol 500mg</option>
+                  <option>AMO-1000 — Amoxicillin 1000mg</option>
+                  <option selected>MET-500 — Metformin 500mg</option>
+                </select>
+              </div>
+
+              <div class="shortage-alert">
+                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <div class="shortage-alert-text">
+                  Open requirement <strong>REQ-2024-093</strong> exists for this item.
+                  <span class="req-link">View requirement</span> or continue to create a separate manual task.
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field-group">
+                  <div class="field-label">Source location <span class="req">*</span></div>
+                  <select class="field-select">
+                    <option selected>BLK-A-108-B</option>
+                    <option>BLK-A-110-C</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <div class="field-label">Destination <span class="req">*</span></div>
+                  <select class="field-select">
+                    <option selected>PF-A-018</option>
+                    <option>PF-A-019</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="section-divider">Source stock available</div>
+
+              <div class="source-card selected" onclick="selectSource(this)">
+                <div class="radio-dot checked"></div>
+                <div>
+                  <div class="source-name">BLK-A-108-B <span class="fefo-badge">FEFO</span></div>
+                  <div class="source-detail">Available: 820 EA &middot; Batch: BTH2024055 &middot; Exp: 2026-04-12</div>
+                </div>
+              </div>
+              <div class="source-card" onclick="selectSource(this)">
+                <div class="radio-dot"></div>
+                <div>
+                  <div class="source-name">BLK-A-110-C</div>
+                  <div class="source-detail">Available: 440 EA &middot; Batch: BTH2024062 &middot; Exp: 2026-08-20</div>
+                </div>
+              </div>
+
+              <div class="field-row" style="margin-top: 12px;">
+                <div class="field-group">
+                  <div class="field-label">Quantity <span class="req">*</span></div>
+                  <input class="field-input" type="number" value="600" min="1">
+                </div>
+                <div class="field-group">
+                  <div class="field-label">Priority</div>
+                  <select class="field-select">
+                    <option>P1 Critical</option>
+                    <option>P2 High</option>
+                    <option>P3 Normal</option>
+                    <option selected>P4 Manual</option>
+                    <option>P5 Scheduled</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <div class="field-label">Notes (optional)</div>
+                <input class="field-input" type="text" placeholder="Add context for the operator…">
+              </div>
+
+              <div class="section-divider">Task summary</div>
+              <div class="summary-box">
+                <div class="summary-row"><span>Item</span><span>MET-500 — Metformin 500mg</span></div>
+                <div class="summary-row"><span>Batch</span><span>BTH2024055</span></div>
+                <div class="summary-row"><span>Source</span><span>BLK-A-108-B</span></div>
+                <div class="summary-row"><span>Destination</span><span>PF-A-018</span></div>
+                <div class="summary-row"><span>Quantity</span><span>600 EA</span></div>
+                <div class="summary-row"><span>Priority</span><span>P4 Manual</span></div>
+                <div class="summary-row"><span>Created by</span><span>S. van der Merwe</span></div>
+              </div>
+            </div>
+
+            <!-- From requirement panel -->
+            <div class="panel" id="panel-req">
+              <div class="field-group">
+                <div class="field-label">Select open requirement</div>
+                <select class="field-select">
+                  <option>REQ-2024-089 &middot; INS-LISPRO &middot; Critical &middot; Pending</option>
+                  <option>REQ-2024-091 &middot; AMO-1000 &middot; High &middot; Pending</option>
+                  <option>REQ-2024-092 &middot; IBU-400 &middot; Normal &middot; Pending</option>
+                </select>
+              </div>
+              <div style="font-size: 11.5px; color: var(--text3); margin-top: -6px; margin-bottom: 14px; line-height: 1.5;">
+                All pending requirements are listed. Selecting one pre-fills the form below.
+              </div>
+
+              <div class="field-row">
+                <div class="field-group">
+                  <div class="field-label">Quantity</div>
+                  <input class="field-input" type="number" value="180">
+                </div>
+                <div class="field-group">
+                  <div class="field-label">Priority</div>
+                  <select class="field-select">
+                    <option selected>P1 Critical</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="section-divider">Source stock</div>
+              <div class="source-card selected">
+                <div class="radio-dot checked"></div>
+                <div>
+                  <div class="source-name">COLD-A-203 <span class="fefo-badge">FEFO recommended</span></div>
+                  <div class="source-detail">Available: 240 EA &middot; Batch: BTH2024089 &middot; Exp: 2025-12-31</div>
+                </div>
+              </div>
+              <div class="source-card">
+                <div class="radio-dot"></div>
+                <div>
+                  <div class="source-name">COLD-A-204</div>
+                  <div class="source-detail">Available: 180 EA &middot; Batch: BTH2024076 &middot; Exp: 2025-10-15</div>
+                </div>
+              </div>
+
+              <div class="section-divider">Task summary</div>
+              <div class="summary-box">
+                <div class="summary-row"><span>Requirement</span><span>REQ-2024-089</span></div>
+                <div class="summary-row"><span>Item</span><span>INS-LISPRO</span></div>
+                <div class="summary-row"><span>Batch</span><span>BTH2024089</span></div>
+                <div class="summary-row"><span>Source</span><span>COLD-A-203</span></div>
+                <div class="summary-row"><span>Destination</span><span>COLD-PF-12</span></div>
+                <div class="summary-row"><span>Quantity</span><span>180 EA</span></div>
+                <div class="summary-row"><span>Priority</span><span>P1 Critical</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="drawer-footer">
+            <button class="btn" id="cancel-btn">Cancel</button>
+            <button class="btn btn-primary">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
+              Create task
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const drawer = document.getElementById('drawer');
+
+  document.getElementById('open-drawer-btn').addEventListener('click', () => {
+    drawer.classList.add('open');
+  });
+  document.getElementById('close-drawer-btn').addEventListener('click', () => {
+    drawer.classList.remove('open');
+  });
+  document.getElementById('cancel-btn').addEventListener('click', () => {
+    drawer.classList.remove('open');
+  });
+
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('panel-' + this.dataset.panel).classList.add('active');
+    });
+  });
+
+  function selectSource(card) {
+    const siblings = card.parentElement.querySelectorAll('.source-card');
+    siblings.forEach(c => {
+      c.classList.remove('selected');
+      c.querySelector('.radio-dot').classList.remove('checked');
+    });
+    card.classList.add('selected');
+    card.querySelector('.radio-dot').classList.add('checked');
+  }
+</script>
+</body>
+</html>
